@@ -1,0 +1,16 @@
+# Copy this file to .env and fill in your values
+
+# Required: Your Hugging Face API token
+# Get it from: https://huggingface.co/settings/tokens
+HUGGINGFACE_API_TOKEN=your_huggingface_api_token_here
+
+# Optional: Custom model for classification (default: google/vit-base-patch16-224)
+# Alternative models:
+# - microsoft/DiT-base-distilled-patch16-224 (Data-efficient Image Transformer)
+# - facebook/convnext-base-224 (ConvNeXt model)
+# - microsoft/swin-base-patch4-window7-224 (Swin Transformer)
+HUGGINGFACE_MODEL_ID=google/vit-base-patch16-224
+
+# Optional: API configuration
+API_HOST=0.0.0.0
+API_PORT=8000

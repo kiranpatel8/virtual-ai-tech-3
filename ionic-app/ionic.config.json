@@ -1,0 +1,7 @@
+{
+  "name": "telecom-device-identifier-app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
