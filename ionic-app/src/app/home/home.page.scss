@@ -1,0 +1,247 @@
+/* Home Page Styles */
+
+/* Logo Styles */
+.logo-container {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+
+  .logo-icon {
+    font-size: 32px;
+    color: var(--ion-color-primary);
+  }
+
+  img.logo-image {
+    height: 40px;
+    width: auto;
+    max-width: 150px;
+    object-fit: contain;
+  }
+}
+
+.header-section {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
+  color: white;
+  margin-bottom: 16px;
+
+  .main-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    margin: 8px 0;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 4px 0 0 0;
+    opacity: 0.9;
+  }
+}
+
+.camera-controls {
+  padding: 0 16px;
+  margin-bottom: 16px;
+
+  ion-button {
+    margin-bottom: 8px;
+    --border-radius: 12px;
+    height: 48px;
+    font-weight: 500;
+  }
+}
+
+.image-card {
+  margin: 16px;
+  --border-radius: 12px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+  }
+
+  .clear-button {
+    float: right;
+  }
+}
+
+.loading-card {
+  margin: 16px;
+  --border-radius: 12px;
+
+  ion-spinner {
+    margin-bottom: 12px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--ion-color-medium);
+  }
+}
+
+.results-card {
+  margin: 16px;
+  --border-radius: 12px;
+
+  .top-prediction {
+    margin-bottom: 24px;
+
+    h3 {
+      color: var(--ion-color-primary);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .main-prediction {
+      background: var(--ion-color-light);
+      border-radius: 8px;
+      padding: 12px;
+      border-left: 4px solid var(--ion-color-primary);
+
+      .device-name {
+        font-size: 18px;
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+    }
+  }
+
+  .all-predictions {
+    margin-bottom: 24px;
+
+    h4 {
+      color: var(--ion-color-medium);
+      margin-bottom: 8px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .prediction-item {
+      margin-bottom: 8px;
+    }
+  }
+
+  .prediction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+
+    .prediction-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .device-name {
+        text-transform: capitalize;
+      }
+    }
+
+    .confidence-badge {
+      font-weight: 600;
+    }
+  }
+
+  .metadata {
+    border-top: 1px solid var(--ion-color-light);
+    padding-top: 16px;
+    margin-top: 16px;
+
+    ion-item {
+      --padding-start: 0;
+      --inner-padding-end: 0;
+
+      h4 {
+        margin: 0 0 4px 0;
+        font-weight: 500;
+      }
+
+      p {
+        margin: 0;
+        color: var(--ion-color-medium);
+        font-size: 14px;
+      }
+    }
+  }
+
+  .status-message {
+    text-align: center;
+    padding: 20px;
+
+    ion-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      margin: 8px 0;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 4px 0;
+      color: var(--ion-color-medium);
+    }
+  }
+}
+
+.instructions-card {
+  margin: 16px;
+  --border-radius: 12px;
+  border: 2px dashed var(--ion-color-light);
+
+  h3 {
+    color: var(--ion-color-primary);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  ion-item {
+    --padding-start: 0;
+    --inner-padding-end: 0;
+    margin-bottom: 8px;
+
+    ion-label {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+  }
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .camera-controls {
+    display: flex;
+    gap: 16px;
+    
+    ion-button {
+      margin-bottom: 0;
+    }
+  }
+
+  .image-card img {
+    height: 400px;
+  }
+}
+
+/* Dark Theme Adjustments */
+@media (prefers-color-scheme: dark) {
+  .header-section {
+    background: linear-gradient(135deg, var(--ion-color-primary-shade) 0%, var(--ion-color-secondary-shade) 100%);
+  }
+
+  .top-prediction .main-prediction {
+    background: var(--ion-color-dark);
+    border-left-color: var(--ion-color-primary-tint);
+  }
+
+  .instructions-card {
+    border-color: var(--ion-color-dark);
+  }
+}
