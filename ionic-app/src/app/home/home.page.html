@@ -7,7 +7,7 @@
       </div>
     </ion-buttons>
     <ion-title>
-      Virtual AI Technician
+      Virtual AI Technician -2
     </ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="checkApiHealth()">
@@ -28,9 +28,10 @@
     <p>Take a photo or select an image to auto diagnose internet issues</p>
   </div>
 
-  <!-- Display boolean -->
+  <!-- Display boolean 
   <p>API Healthy: {{ apiHealthy }}</p>
   <p>Health: {{ healthStatus }}</p>
+  -->
 
 
   <!-- API Status -->
@@ -90,7 +91,7 @@
   <ion-card *ngIf="identificationResult && !isLoading" class="results-card">
     <ion-card-header>
       <ion-card-title>
-        <ion-icon name="analytics" slot="start"></ion-icon>
+        <ion-icon name="analytics-outline"></ion-icon>
         Diagnosis Results
       </ion-card-title>
     </ion-card-header>
@@ -98,34 +99,36 @@
     <ion-card-content>
       <!-- Success Results -->
       <div *ngIf="identificationResult.status === 'success'">
-        <!-- Problem detection and next best action -->
-        <div class="top-prediction" *ngIf="identificationResult.problem_detected">
+        <!-- Problem description -->
+        <div class="top-prediction" *ngIf="identificationResult.problem_detected; else noProblem">
           <h3>Problem Detected</h3>
           <div class="prediction-item main-prediction">
             <div class="prediction-info">
               <ion-icon name="hardware-chip" color="primary"></ion-icon>
               <span class="device-name">{{ identificationResult.problem_description }}</span>
             </div>
-          </div>
+          </div> 
         </div>
         
-        <!-- Top Prediction -->
-        <div class="top-prediction" *ngIf="identificationResult.top_prediction">
+        <!-- Dispatch note -->
+        <div class="top-prediction" *ngIf="identificationResult.problem_detected">
           <h3>Resolution</h3>
           <div class="prediction-item main-prediction">
             <div class="prediction-info">
               <ion-icon name="hardware-chip" color="primary"></ion-icon>
               <span class="device-name">{{ identificationResult.dispatch_note }}</span>
             </div>
-            <ion-badge 
-              [color]="getConfidenceColor(identificationResult.top_prediction.score)"
-              class="confidence-badge">
-              {{ getConfidencePercent(identificationResult.top_prediction.score) }}
-            </ion-badge>
           </div>
         </div>
 
-        <!-- All Predictions -->
+        <ng-template #noProblem>
+          <div class="no-problem">
+            <h3>No problem detected</h3>
+            <p>If you still have issues, try retaking the photo or check connections.</p>
+          </div>
+        </ng-template>
+
+        <!-- All Predictions
         <div class="all-predictions" *ngIf="identificationResult.predictions && identificationResult.predictions.length > 1">
           <h4>Alternative Predictions</h4>
           <div 
@@ -143,8 +146,10 @@
             </ion-badge>
           </div>
         </div>
+      -->
+      
 
-        <!-- Metadata -->
+        <!-- Metadata
         <div class="metadata">
           <ion-item lines="none">
             <ion-icon name="layers" slot="start" color="medium"></ion-icon>
@@ -162,7 +167,11 @@
             </ion-label>
           </ion-item>
         </div>
+      -->
+      
       </div>
+
+  
 
       <!-- Model Loading -->
       <div *ngIf="identificationResult.status === 'model_loading'" class="status-message">
