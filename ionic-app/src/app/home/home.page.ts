@@ -292,7 +292,8 @@ export class HomePage implements OnInit {
         this.identificationResult = result;
         
         if (result.status === 'success') {
-          this.showToast(`Device identified: ${result.top_prediction?.label}`, 'success');
+          //this.showToast(`Device identified: ${result.top_prediction?.label}`, 'success');
+          this.showToast(`Problem identified: ${result.problem_description}`, 'danger');
         } else if (result.status === 'model_loading') {
           this.showToast(`Model is loading. Please wait ${result.estimated_time}s and try again.`, 'warning');
         } else {

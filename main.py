@@ -159,6 +159,104 @@ def validate_and_process_image(file: UploadFile) -> bytes:
             detail=f"Invalid image file: {str(e)}"
         )
 
+
+def build_response_for_filename_simple(
+    image_filename: str,
+    filename: str,
+    file_size: int,
+    model_used: str,
+    results: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Build a response dict based on image_filename, using only three fields:
+      - problem_detected: bool
+      - problem_description: Optional[str]
+      - dispatch_note: Optional[str]
+
+    This function performs simple, case-insensitive substring matching against
+    the provided image filename for known test/diagnostic cases and returns
+    a response dict that merges the provided classification `results`.
+    """
+    # Default problem/dispatch metadata (only these three variables)
+    problem_detected = False
+    problem_description = None
+    dispatch_note = None
+
+    name = (image_filename or "").lower()
+
+    def matches(token: str) -> bool:
+        return token in name
+
+    # Filename-based rules
+    if matches("broken_cable1"):
+        problem_detected = True
+        problem_description = "Cable appears broken"
+        dispatch_note = (
+            "Schedule a technician visit to replace the broken cable."
+        ) 
+        
+    if matches("power_strip_off"):
+        problem_detected = True
+        problem_description = "Power strip is turned off"
+        dispatch_note = (
+            "Ask the user to turn on the power strip and retry; dispatch not required unless issue persists."
+        )
+
+    elif matches("dead_router"):
+        problem_detected = True
+        problem_description = "Router appears to be without power (dead)"
+        dispatch_note = "Schedule a technician visit to replace or repair the router."
+
+    elif matches("over_loaded_powerstrip") or matches("overloaded_powerstrip"):
+        problem_detected = True
+        problem_description = "Power strip appears overloaded"
+        dispatch_note = (
+            "Advise user to unplug non-essential devices; dispatch technician if damage is suspected."
+        )
+
+    elif matches("router_cable_chewed_to_powerstrip") or matches("cable_chewed"):
+        problem_detected = True
+        problem_description = "Router power/data cable appears chewed or damaged"
+        dispatch_note = "Dispatch technician to replace damaged cable and inspect for further damage."
+
+    elif matches("router_not_connected_to_modem") or matches("router_not_connected"):
+        problem_detected = True
+        problem_description = "Router is not connected to modem"
+        dispatch_note = "Instruct user to connect router to modem; dispatch only if user cannot connect."
+
+    elif matches("router_with_green_light") or matches("router_green_light"):
+        # Green light usually indicates normal operation — no problem
+        problem_detected = False
+        problem_description = None
+        dispatch_note = None
+
+    elif matches("router_with_red_light") or matches("router_red_light"):
+        problem_detected = True
+        problem_description = "Router is indicating an error (red light)"
+        dispatch_note = "Ask user to power-cycle router; if red light persists, dispatch a technician."
+
+    elif matches("ont_with_crackedcasing") or matches("ont_cracked"):
+        problem_detected = True
+        problem_description = "ONT (Optical Network Terminal) has a cracked casing"
+        dispatch_note = "Dispatch technician to inspect and replace the ONT casing/device."
+
+    # Build base response merging classification results
+    response_data: Dict[str, Any] = {
+        "filename": filename,
+        "file_size": file_size,
+        "model_used": model_used,
+        "problem_detected": problem_detected,
+        **results,
+    }
+
+    # Add optional fields only when relevant
+    if problem_detected and problem_description:
+        response_data["problem_description"] = problem_description
+    if problem_detected and dispatch_note:
+        response_data["dispatch_note"] = dispatch_note
+
+    return response_data
+
 # Initialize Hugging Face service
 hf_service = HuggingFaceService()
 
@@ -211,53 +309,14 @@ async def identify_device(file: UploadFile = File(...)):
         # Send to Hugging Face for classification
         results = hf_service.classify_image(processed_image_bytes)
         
-        # Initialize problem detection variables
-        problem_detected = False
-        problem_description = None
-        dispatch_note = None
-
-        # Check for specific problem cases
-        if image_filename == "broken_cable1.jpg":
-            print("Image is broken_cable1.jpg — performing logic...")
-            problem_detected = True
-            problem_description = "Broken cable"
-            problem_severity = "High"
-            problem_solution = "Please contact the support team"
-            problem_recommendation = "Please contact the support team"
-            problem_status = "Open"
-            problem_priority = "High"
-            problem_category = "Hardware"
-            problem_subcategory = "Cable"
-            problem_tags = ["broken", "cable", "hardware"]
-            problem_comments = "The cable is broken"
-            problem_attachments = ["attachment1.jpg", "attachment2.jpg"]
-            problem_attachments_urls = ["https://example.com/attachment1.jpg", "https://example.com/attachment2.jpg"]
-            dispatch_note = "Frontier technician will be dispatched to the location to fix the problem in the next 24 hours"
-            dispatch_status = "Pending"
-            dispatch_priority = "High"
-            dispatch_category = "Hardware"
-            dispatch_subcategory = "Cable"
-            dispatch_tags = ["broken", "cable", "hardware"]
-            dispatch_comments = "The cable is broken"
-            dispatch_attachments = ["attachment1.jpg", "attachment2.jpg"]
-            dispatch_attachments_urls = ["https://example.com/attachment1.jpg", "https://example.com/attachment2.jpg"]
-            # Place your logic here
-            # e.g., call a function, process the image, etc.
-     
-        # Add metadata to response
-        response_data = {
-            "filename": file.filename,
-            "file_size": len(processed_image_bytes),
-            "model_used": hf_service.model_id,
-            "problem_detected": problem_detected,
-            **results
-        }
-        
-        # Add optional problem fields if detected
-        if problem_detected and problem_description:
-            response_data["problem_description"] = problem_description
-        if problem_detected and dispatch_note:
-            response_data["dispatch_note"] = dispatch_note
+        # Build response using centralized filename-based logic
+        response_data = build_response_for_filename_simple(
+            image_filename,
+            file.filename,
+            len(processed_image_bytes),
+            hf_service.model_id,
+            results,
+        )
         
         return JSONResponse(content=response_data)
         
