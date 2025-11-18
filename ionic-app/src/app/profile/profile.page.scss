@@ -1,0 +1,124 @@
+/* Profile Page Styles */
+
+.profile-card {
+  margin: 20px 16px;
+  --border-radius: 16px;
+
+  .avatar-container {
+    margin-bottom: 16px;
+
+    .avatar-icon {
+      font-size: 120px;
+      color: var(--ion-color-primary);
+    }
+  }
+
+  h2 {
+    margin: 12px 0 4px 0;
+    font-weight: 600;
+    font-size: 24px;
+  }
+
+  .user-email {
+    color: var(--ion-color-medium);
+    margin: 4px 0;
+    font-size: 14px;
+  }
+
+  .user-phone {
+    color: var(--ion-color-medium);
+    margin: 0 0 12px 0;
+    font-size: 13px;
+  }
+
+  .user-usi {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ion-color-light);
+    padding: 8px 16px;
+    border-radius: 20px;
+    margin-top: 8px;
+
+    ion-icon {
+      font-size: 18px;
+      color: var(--ion-color-primary);
+    }
+
+    .usi-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ion-color-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .usi-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+    }
+  }
+}
+
+ion-card {
+  --border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+
+  ion-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ion-color-primary);
+  }
+}
+
+ion-list {
+  padding: 0;
+
+  ion-item {
+    --padding-start: 16px;
+    --inner-padding-end: 16px;
+
+    ion-icon {
+      font-size: 24px;
+      margin-right: 16px;
+    }
+
+    ion-label {
+      font-size: 16px;
+    }
+  }
+}
+
+.logout-container {
+  padding: 16px;
+  margin-top: 20px;
+
+  ion-button {
+    --border-radius: 12px;
+    height: 48px;
+    font-weight: 500;
+  }
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+  .profile-card {
+    .avatar-icon {
+      color: var(--ion-color-primary-tint);
+    }
+
+    .user-usi {
+      background: var(--ion-color-dark);
+      
+      .usi-label {
+        color: var(--ion-color-primary-tint);
+      }
+
+      .usi-value {
+        color: var(--ion-color-light);
+      }
+    }
+  }
+}
+
