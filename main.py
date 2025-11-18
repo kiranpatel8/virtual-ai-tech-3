@@ -25,6 +25,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:8100",  # Ionic dev server
         "http://127.0.0.1:8100",  # Alternative localhost
+        "http://localhost:8101",  # Ionic dev server (alternate port)
+        "http://127.0.0.1:8101",  # Alternative localhost
         "http://localhost:4200",  # Angular dev server
         "http://127.0.0.1:4200",  # Alternative Angular
     ],
