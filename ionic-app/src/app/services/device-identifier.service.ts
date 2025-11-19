@@ -23,6 +23,15 @@ export interface DeviceIdentificationResponse {
   problem_detected?: boolean;
   problem_description?: string;
   dispatch_note?: string;
+  // OCR device info
+  device_info?: {
+    model_number: string | null;
+    serial_number: string | null;
+    product_type: string;
+    raw_text: string[];
+    text_detections: number;
+    error?: string;
+  };
 }
 
 export interface HealthResponse {

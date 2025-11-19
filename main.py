@@ -2,7 +2,10 @@ import os
 import io
 import base64
 import requests
-from typing import Optional, Dict, Any
+import re
+import pytesseract
+from PIL import Image as PILImage
+from typing import Optional, Dict, Any, List
 from fastapi import FastAPI, File, UploadFile, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -12,6 +15,9 @@ from config import settings
 
 # Load environment variables
 load_dotenv()
+
+# Configure Tesseract path for Windows
+pytesseract.pytesseract.tesseract_cmd = r'C:\Users\ftrhack424\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
 
 app = FastAPI(
     title="Telecom Device Identifier API",
@@ -117,6 +123,105 @@ class HuggingFaceService:
                 detail=f"Error communicating with Hugging Face API: {str(e)}"
             )
 
+def extract_device_info_from_image(image_bytes: bytes) -> Dict[str, Any]:
+    """
+    Extract model number, serial number, and product type from router/modem/ONT images
+    using Tesseract OCR via pytesseract.
+    
+    Args:
+        image_bytes: Image data as bytes
+        
+    Returns:
+        Dictionary containing:
+            - model_number: str or None
+            - serial_number: str or None
+            - product_type: str or None (router, modem, ont, or unknown)
+            - raw_text: List of extracted text strings
+            - confidence: Average confidence score
+    """
+    try:
+        # Convert bytes to PIL Image
+        image = Image.open(io.BytesIO(image_bytes))
+        
+        # Perform OCR
+        print("🔍 Performing OCR on image...")
+        extracted_text = pytesseract.image_to_string(image)
+        extracted_texts = [line.strip() for line in extracted_text.split('\n') if line.strip()]
+        
+        print(f"  OCR extracted {len(extracted_texts)} lines of text")
+        for text in extracted_texts[:10]:  # Print first 10 lines
+            print(f"  OCR: '{text}'")
+        
+        # Initialize result variables
+        model_number = None
+        serial_number = None
+        product_type = None
+        
+        # Combine all text for easier searching
+        full_text = " ".join(extracted_texts).upper()
+        
+        # Detect product type based on keywords
+        if any(keyword in full_text for keyword in ["ONT", "OPTICAL NETWORK TERMINAL", "FIBER"]):
+            product_type = "ONT"
+        elif any(keyword in full_text for keyword in ["MODEM", "CABLE MODEM", "DSL"]):
+            product_type = "Modem"
+        elif any(keyword in full_text for keyword in ["ROUTER", "WIRELESS", "WI-FI", "WIFI"]):
+            product_type = "Router"
+        
+        # Extract model number - look for common patterns
+        # Patterns: MODEL: XXX, Model #: XXX, or alphanumeric codes like AC1900, WRT54G, etc.
+        model_patterns = [
+            r'MODEL\s+NO[:\s#]*([A-Z0-9\-]+)',
+            r'MODEL[:\s#]*([A-Z0-9\-]+)',
+            r'MODEL\s*NUMBER[:\s#]*([A-Z0-9\-]+)',
+            r'P/N[:\s]*([A-Z0-9\-]+)',
+            r'PART\s*NUMBER[:\s]*([A-Z0-9\-]+)',
+            r'\b([A-Z]{2,4}[0-9]{3,5}[A-Z0-9]*)\b',  # Patterns like AC1900, WRT54G
+        ]
+        
+        for pattern in model_patterns:
+            match = re.search(pattern, full_text)
+            if match:
+                model_number = match.group(1)
+                break
+        
+        # Extract serial number - look for S/N, Serial, etc.
+        serial_patterns = [
+            r'S/N[:\s]*([A-Z0-9\-]+)',
+            r'SERIAL[:\s#]*([A-Z0-9\-]+)',
+            r'SERIAL\s*NUMBER[:\s]*([A-Z0-9\-]+)',
+            r'SN[:\s]*([A-Z0-9\-]+)',
+            r'SN[\s]*([A-Z0-9\-]+)',
+        ]
+        
+        for pattern in serial_patterns:
+            match = re.search(pattern, full_text)
+            if match:
+                serial_number = match.group(1)
+                break
+        
+        result = {
+            "model_number": model_number,
+            "serial_number": serial_number,
+            "product_type": product_type if product_type else "Unknown",
+            "raw_text": extracted_texts,
+            "text_detections": len(extracted_texts)
+        }
+        
+        print(f"✅ OCR extraction complete: Model={model_number}, Serial={serial_number}, Type={product_type}")
+        return result
+        
+    except Exception as e:
+        print(f"❌ OCR extraction error: {str(e)}")
+        return {
+            "model_number": None,
+            "serial_number": None,
+            "product_type": "Unknown",
+            "raw_text": [],
+            "text_detections": 0,
+            "error": str(e)
+        }
+
 def validate_and_process_image(file: UploadFile) -> bytes:
     """
     Validate uploaded file and process image
@@ -194,7 +299,7 @@ def build_response_for_filename_simple(
         problem_detected = True
         problem_description = "Cable appears broken"
         dispatch_note = (
-            "Schedule a technician visit to replace the broken cable."
+            "Please replace the broken cable and resume self-installation."
         ) 
         
     if matches("power_strip_off"):
@@ -203,6 +308,16 @@ def build_response_for_filename_simple(
         dispatch_note = (
             "Ask the user to turn on the power strip and retry; dispatch not required unless issue persists."
         )
+
+    elif matches("router_with_redlight_no_internet") or matches("router_red_light"):
+        problem_detected = True
+        problem_description = "Red internet light, unable to connect to internet"
+        dispatch_note = "Problem identified requires additional assistance, we have created ticket number TT12345 your appointment details will be sent to your mobile number on file."
+
+    elif matches("router_no_lights_not_connected_to_power") or matches("router_no_power"):
+        problem_detected = True
+        problem_description = "Power Supply Not Connected - No Lights"
+        dispatch_note = "Please connect a power cord and resume self-installation."    
 
     elif matches("dead_router"):
         problem_detected = True
@@ -232,15 +347,12 @@ def build_response_for_filename_simple(
         problem_description = None
         dispatch_note = None
 
-    elif matches("router_with_red_light") or matches("router_red_light"):
-        problem_detected = True
-        problem_description = "Router is indicating an error (red light)"
-        dispatch_note = "Ask user to power-cycle router; if red light persists, dispatch a technician."
-
     elif matches("ont_with_crackedcasing") or matches("ont_cracked"):
         problem_detected = True
         problem_description = "ONT (Optical Network Terminal) has a cracked casing"
         dispatch_note = "Dispatch technician to inspect and replace the ONT casing/device."
+
+        
 
     # Build base response merging classification results
     response_data: Dict[str, Any] = {
@@ -298,7 +410,7 @@ async def identify_device(file: UploadFile = File(...)):
         file: Image file (JPEG, PNG, etc.) containing a telecom device
         
     Returns:
-        JSON response with device classification results
+        JSON response with device classification results and OCR-extracted device info
     """
     try:
         print(f"📸 Received image: {file.filename}")
@@ -311,6 +423,9 @@ async def identify_device(file: UploadFile = File(...)):
         # Send to Hugging Face for classification
         results = hf_service.classify_image(processed_image_bytes)
         
+        # Extract device information using OCR
+        ocr_info = extract_device_info_from_image(processed_image_bytes)
+        
         # Build response using centralized filename-based logic
         response_data = build_response_for_filename_simple(
             image_filename,
@@ -319,6 +434,11 @@ async def identify_device(file: UploadFile = File(...)):
             hf_service.model_id,
             results,
         )
+        
+        # Add OCR-extracted device information to response
+        response_data["device_info"] = ocr_info
+
+        print("response_data: ", response_data)
         
         return JSONResponse(content=response_data)
         

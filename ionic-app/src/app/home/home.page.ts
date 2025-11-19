@@ -271,7 +271,7 @@ export class HomePage implements OnInit {
     }
 
     const loading = await this.loadingController.create({
-      message: 'Diagnosing internet issue...',
+      message: 'Diagnosing self-install/internet equipment issue ...',
       spinner: 'crescent'
     });
 
@@ -290,9 +290,20 @@ export class HomePage implements OnInit {
       
       if (result) {
         this.identificationResult = result;
+
+        console.log("Model Number: ", result.device_info?.model_number);
         
         if (result.status === 'success') {
           //this.showToast(`Device identified: ${result.top_prediction?.label}`, 'success');
+          const selfInstallRouterModelNumber = 'AR3589';
+          if (result.device_info?.model_number && result.device_info.model_number.toUpperCase() !== selfInstallRouterModelNumber.toUpperCase()) {
+            //show alert that the model number is not the self install router model number
+            this.showAlert('Model Number Not Supported', 'The model number of the device does not match the self install router model number.');
+            this.identificationResult.problem_detected = true;
+            this.identificationResult.problem_description = 'Equipment does not match equipment assigned to you.';
+            this.identificationResult.dispatch_note = 'Equipment appears incorrect, we will send new equipment to your location.';
+          }
+
           this.showToast(`Problem identified: ${result.problem_description}`, 'danger');
         } else if (result.status === 'model_loading') {
           this.showToast(`Model is loading. Please wait ${result.estimated_time}s and try again.`, 'warning');
