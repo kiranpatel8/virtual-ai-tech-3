@@ -1,1 +1,4 @@
 .angular/
+.env
+__pycache__/
+*.pyc
